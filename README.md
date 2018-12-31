@@ -2,4 +2,4 @@
 
 https://www.wesleysteiner.com/mr/mrfc/mrfc.html
 
-A web-based "Fast Clock" for model railroad operations.
+A web-based "fast-clock" for model railroad operations.
