@@ -3,9 +3,9 @@
 <html manifest='mrfc.appcache'>
 
 <head>
-	<title>MR Fast Clock</title>
+	<title>Clock</title>
 
-	<META NAME="description" CONTENT="A model railroad 'Fast-Clock' for web browsers.">
+	<META NAME="description" CONTENT="">
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<meta name='viewport' content="width=device-width,initial-scale=1">
 
@@ -223,7 +223,6 @@
 	</script>
 
 	<div class='header'>
-		Model Railroad Fast Clock
 	</div>
 
 	<div style="background-color: black; color: red; white-space: nowrap;">
@@ -231,25 +230,16 @@
 	</div>
 
 	<div class='toolbar'>
-		Compress 24 hrs into
 		<input class='toolbar' type="text" size='4' id="factor" style='text-align: center;' onchange="OnFactorChanged()"
 		 value="24" />
 		hrs.
-		<input class='toolbar' type="button" id="dec_hour" onclick="OnDecHour()" value="-H" title="Decrement the hours by one." />
+		<input class='toolbar' type="button" id="dec_hour" onclick="OnDecHour()" value="-H" title="- Hour." />
 		<input class='toolbar' type="button" id="zero_hour" onclick="OnZeroHour()" value="12:00" title="Set the time to noon." />
-		<input class='toolbar' type="button" id="inc_hour" onclick="OnIncHour()" value="+H" title="Increment the hours by one." />
-		<input class='toolbar' type="button" id="dec_minute" onclick="OnDecMinute()" value="-M" title="Decrement the minutes by one." />
-		<input class='toolbar' type="button" id="zero_minute" onclick="OnZeroMinute()" value="00" title="Set the time to the top of the hour." />
-		<input class='toolbar' type="button" id="inc_minute" onclick="OnIncMinute()" value="+M" title="Increment the minutes by one." />
+		<input class='toolbar' type="button" id="inc_hour" onclick="OnIncHour()" value="+H" title="+ Hour." />
+		<input class='toolbar' type="button" id="dec_minute" onclick="OnDecMinute()" value="-M" title="- Minute." />
+		<input class='toolbar' type="button" id="inc_minute" onclick="OnIncMinute()" value="+M" title="+ Minute." />
 		<input class='toolbar' type="button" id="pause_resume" onclick="OnPauseResume()" value="PAUSE" />
 	</div>
-
-	<p>A <i>fast-clock</i> compresses time for model railroading timetables.
-		Control your operating sessions with this handy fast-clock for the web.
-		Runs on any device including tablets and smartphones.
-		Adjust the controls above to your liking and your good&nbsp;to&nbsp;go.</p>
-	<p>Even works off-line when there is no Internet connection.
-		Just bookmark this page so you can navigate back here&nbsp;quickly.</p>
 	
 	<script type="text/javascript">
 		OnResized();
@@ -259,12 +249,6 @@
 <hr>
 
 <div class="footer">
-	<p>Have a suggestion or idea? Send me a quick&nbsp;note.</p>
-	<p><a class='mylink' href='mailto:mail@wesleysteiner.net?subject=Fast-Clock%20Feedback'>FEEDBACK</a></p>
-	<p>Like what I've done and want to support my efforts or just say&nbsp;thanks?</p>
-	<p><a class='mylink' target='_blank' href='../../donate.html'>THANKS</a></p>
-	<p>Revision #3</p>
-	<p>(available on <a target='_blank' href="https://github.com/tdmurtmub/mr_fastclock">GitHub</a>)</p>
 	<p>&copy; 2009 Wesley Steiner</p>
 </div>
 
