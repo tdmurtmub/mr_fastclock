@@ -1,290 +1,499 @@
-<!DOCTYPE HTML>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <title>MR Fast Clock</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MR Fast-Clock</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#050505">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2088/2088617.png">
+    
+    <!-- Web App Manifest -->
+    <link rel="manifest" href='data:application/manifest+json,{"name":"MR Fast-Clock","short_name":"MRFC","start_url":".","display":"standalone","background_color":"#050505","theme_color":"#ef4444","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2088/2088617.png","sizes":"512x512","type":"image/png"}]}'>
 
-  <META NAME="description" CONTENT="A model railroad 'Fast-Clock' for web browsers.">
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <meta name='viewport' content="width=device-width,initial-scale=1">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --text-color: #e2e8f0;
+            --accent-color: #ef4444;
+            --accent-glow: rgba(239, 68, 68, 0.4);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --panel-bg: rgba(255, 255, 255, 0.02);
+            --secondary-text: #64748b;
+        }
 
-  <style>
-    h1,
-    h2,
-    h3 {
-      font-weight: normal;
-    }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+        }
 
-    h1 {
-      font-size: 18pt
-    }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: monospace;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            touch-action: none; /* Prevent accidental browser gestures */
+        }
 
-    h2 {
-      font-size: 16pt
-    }
+        /* Clock Display */
+        .clock-container {
+            font-family:  monospace;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            padding: 0 4vw;
+            user-select: none;
+        }
 
-    h3 {
-      font-size: 14pt
-    }
+        #clock {
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.05em;
+            font-variant-numeric: tabular-nums;
+            color: var(--accent-color);
+            text-shadow: 0 0 40px var(--accent-glow), 0 0 10px rgba(239, 68, 68, 0.5);
+            white-space: nowrap;
+            display: inline-block;
+        }
 
-    body {
-      font-family: arial, helvetica, sans-serif;
-      margin: 0;
-    }
+        /* Control Panel */
+        .controls-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 0 0.5rem;
+        }
 
-    p {
-      text-align: center;
-      max-width: 728px;
-      margin: 10pt auto 10pt auto;
-    }
+        .glass-panel {
+            width: 100%;
+            max-width: 896px; 
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px 24px 0 0;
+            padding: 1.25rem;
+            margin-bottom: 0;
+            z-index: 50;
+        }
 
-    a.mylink {
-      font-size: 13pt;
-      background-color: #304e82;
-      color: #ded3c1;
-      border-radius: 8px;
-      -webkit-border-radius: 8px;
-      -moz-border-radius: 8px;
-      padding: 4pt;
-      padding-left: 8pt;
-      padding-right: 8pt;
-    }
+        @media (min-width: 640px) {
+            .glass-panel {
+                border-radius: 24px;
+                padding: 1.5rem;
+            }
+            .controls-wrapper {
+                padding: 0 1rem;
+            }
+        }
 
-    a.mylink:active {
-      color: #DDDDDD;
-    }
+        /* Control Row - Improved Wrapping for Small Screens */
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-evenly;
+            gap: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 1.25rem;
+        }
 
-    a.mylink:hover {
-      color: #DDDDDD;
-    }
+        /* @media (min-width: 640px) {
+            .control-row {
+                justify-content: space-between;
+                gap: 1rem;
+            }
+        } */
 
-    a.mylink:visited {
-      color: #DDDDDD;
-    }
+        .control-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+        }
 
-    a.mylink:link {
-      text-decoration: none;
-      color: #DDDDDD;
-    }
+        .label {
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--secondary-text);
+            letter-spacing: 0.1em;
+            user-select: none;
+        }
 
-    .floating {
-      position: fixed;
-      padding: 0;
-      z-index: 99;
-    }
+        /* Buttons with touch-action fixes */
+        .btn-base {
+            height: 44px; /* Slightly taller for better touch targets */
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 10px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: inherit;
+            touch-action: manipulation;
+        }
 
-    .toolbar {
-      font-size: 15pt;
-      margin: .2em;
-    }
+        .btn-base:active {
+            transform: scale(0.96);
+        }
 
-    div.toolbar {
-      padding: 0.5em;
-      text-align: center;
-    }
+        #pause-btn {
+            padding: 0 1rem;
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            min-width: 95px;
+            gap: 0.5rem;
+        }
 
-    div.footer {
-      padding: 1em;
-      font-family: arial, sans-serif;
-      font-size: 11pt;
-      text-align: center;
-      color: #555555;
-      max-width: 550px;
-      margin: auto;
-    }
-  </style>
+        #pause-btn.pause-active {
+            background-color: rgba(34, 197, 94, 0.1);
+            border-color: rgba(34, 197, 94, 0.4);
+            color: #22c55e;
+        }
 
-  <script type="text/javascript">
-    var date = new Date();
-    var hours = date.getHours();
-    var minutes = date.getMinutes();
-    var toggle = false;
-    var interval_id = 0;
-    var heartbeat_id = 0;
+        .sync-btn {
+            padding: 0 1.25rem;
+            background: #1e293b;
+            color: #cbd5e1;
+            border: 1px solid var(--glass-border);
+        }
 
-    function PageSize() {
-      var myWidth = 0, myHeight = 0;
-      if (typeof (window.innerWidth) == 'number') {
-        //Non-IE
-        myWidth = window.innerWidth;
-        myHeight = window.innerHeight;
-      } else if (document.documentElement && (document.documentElement.clientWidth || document.documentElement.clientHeight)) {
-        //IE 6+ in 'standards compliant mode'
-        myWidth = document.documentElement.clientWidth;
-        myHeight = document.documentElement.clientHeight;
-      } else if (document.body && (document.body.clientWidth || document.body.clientHeight)) {
-        //IE 4 compatible
-        myWidth = document.body.clientWidth;
-        myHeight = document.body.clientHeight;
-      }
-      return myWidth;
-    }
+        /* Small Adjustment Buttons */
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--panel-bg);
+            padding: 4px;
+            border-radius: 10px;
+        }
 
-    function UpdateDisplay() {
-      document.getElementById('display_text').innerHTML = ((hours < 10) ? '0' : '') + hours + (toggle ? ':' : ' ') + (minutes < 10 ? '0' : '') + minutes;
-    }
+        .adjust-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--text-color);
+            cursor: pointer;
+            touch-action: manipulation;
+            user-select: none;
+        }
 
-    function IncHour(hour) {
-      ++hour;
-      return (hour > 23) ? 0 : hour;
-    }
+        .adjust-btn:active {
+            background: rgba(239, 68, 68, 0.3);
+            transform: scale(0.9);
+        }
 
-    function OnMinutePulse() {
-      ++minutes;
-      if (minutes > 59) {
-        hours = IncHour(hours);
-        minutes = 0;
-      }
-      UpdateDisplay();
-    }
+        /* ETA Display */
+        .eta-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
 
-    function OnHeartBeat() {
-      toggle = !toggle;
-      UpdateDisplay();
-    }
+        @media (min-width: 640px) {
+            .eta-container {
+                align-items: flex-end;
+            }
+        }
 
-    function ConvertFactorToMilliSec(n) {
-      return (60000 * n / 24);
-    }
+        #eta-label {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--accent-color);
+            line-height: 1;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+        }
 
-    function OnIncHour() {
-      hours = IncHour(hours);
-      UpdateDisplay();
-    }
+        /* Slider Section */
+        .slider-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding-bottom: 0.5rem;
+        }
 
-    function OnIncMinute() {
-      OnMinutePulse();
-    }
+        input[type=range] {
+            width: 100%;
+            height: 20px; /* Thicker touch area */
+            background: transparent;
+            appearance: none;
+            cursor: pointer;
+        }
 
-    function OnZeroMinute() {
-      minutes = 0;
-      UpdateDisplay();
-    }
+        /* Custom Track styling for range */
+        input[type=range]::-webkit-slider-runnable-track {
+            background: #1e293b;
+            height: 8px;
+            border-radius: 4px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            appearance: none;
+            height: 20px;
+            width: 20px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            margin-top: -6px;
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
 
-    function OnZeroHour() {
-      hours = 12;
-      minutes = 0;
-      UpdateDisplay();
-    }
+        /* Footer */
+        .footer {
+            width: 100%;
+            padding: 0.75rem 0;
+            text-align: center;
+        }
 
-    function DecHour(hour) {
-      --hour;
-      return (hour < 0) ? 23 : hour;
-    }
-
-    function OnDecHour() {
-      hours = DecHour(hours);
-      UpdateDisplay();
-    }
-
-    function DecMinute(minute) {
-      --minute;
-      return (minute < 0) ? 59 : minute;
-    }
-
-    function OnDecMinute() {
-      minutes = DecMinute(minutes);
-      UpdateDisplay();
-    }
-
-    function ResetHeartbeat() {
-      heartbeat_id = setInterval(OnHeartBeat, 1000);
-    }
-
-    function SetScaleTimer() {
-      interval_id = setInterval(OnMinutePulse, ConvertFactorToMilliSec(document.getElementById('factor').value));
-    }
-
-    function OnPauseResume() {
-      if (heartbeat_id) {
-        clearInterval(interval_id);
-        clearInterval(heartbeat_id);
-        interval_id = 0;
-        heartbeat_id = 0;
-        toggle = true;
-        UpdateDisplay();
-        document.getElementById("pause_resume").value = "Resume";
-      }
-      else {
-        ResetHeartbeat();
-        SetScaleTimer();
-        document.getElementById("pause_resume").value = "Pause";
-      }
-    }
-
-    function InitializePage() {
-      ResetHeartbeat();
-      interval_id = setInterval(OnMinutePulse, 60000);
-    }
-
-    function OnFactorChanged() {
-      clearInterval(interval_id);
-      if (heartbeat_id) SetScaleTimer();
-    }
-
-    function OnResized() {
-      document.getElementById('display_text').style.fontSize = (PageSize() / 3.2).toString() + 'px';
-    }
-
-  </script>
-
+        .footer-text {
+            font-size: 10px;
+            color: var(--secondary-text);
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+    </style>
 </head>
+<body>
 
-<body onresize="OnResized()" style="font-family:sans-serif">
+    <!-- Main Section: The Clock -->
+    <div class="clock-container">
+        <div id="clock">00:00</div>
+    </div>
 
-  <script type="text/javascript">
-    InitializePage();
-  </script>
+    <!-- Bottom Section: All Controls -->
+    <div class="controls-wrapper">
+        <div class="glass-panel">
+            
+            <div class="control-row">
+                <!-- State -->
+                <div class="control-item">
+                    <span class="label">State</span>
+                    <button id="pause-btn" class="btn-base" onclick="togglePause()">
+                        <span id="pause-icon">⏸</span>
+                        <span id="pause-label">Pause</span>
+                    </button>
+                </div>
 
-  <div style="background-color: black; color: red; white-space: nowrap;">
-    <center id="display_text" style="font-weight:bold; font-family:monospace">00:00</center>
-  </div>
+                <!-- Hours -->
+                <div class="control-item">
+                    <span class="label">Hours</span>
+                    <div class="control-group">
+                        <button onclick="adjustTime('h', -1)" class="adjust-btn">−</button>
+                        <button onclick="adjustTime('h', 1)" class="adjust-btn">+</button>
+                    </div>
+                </div>
 
-  <div class='toolbar'>
-    Compress 24 hrs into
-    <input class='toolbar' type="text" size='4' id="factor" style='text-align: center;' onchange="OnFactorChanged()"
-      value="24" />
-    hrs.
-    <input class='toolbar' type="button" id="dec_hour" onclick="OnDecHour()" value="-H"
-      title="Decrement the hours by one." />
-    <input class='toolbar' type="button" id="zero_hour" onclick="OnZeroHour()" value="12:00"
-      title="Set the time to noon." />
-    <input class='toolbar' type="button" id="inc_hour" onclick="OnIncHour()" value="+H"
-      title="Increment the hours by one." />
-    <input class='toolbar' type="button" id="dec_minute" onclick="OnDecMinute()" value="-M"
-      title="Decrement the minutes by one." />
-    <input class='toolbar' type="button" id="zero_minute" onclick="OnZeroMinute()" value="00"
-      title="Set the time to the top of the hour." />
-    <input class='toolbar' type="button" id="inc_minute" onclick="OnIncMinute()" value="+M"
-      title="Increment the minutes by one." />
-    <input class='toolbar' type="button" id="pause_resume" onclick="OnPauseResume()" value="PAUSE" />
-  </div>
+                <!-- Sync -->
+                <div class="control-item">
+                    <span class="label">Real</span>
+                    <button onclick="resetToNow()" class="btn-base sync-btn">Sync</button>
+                </div>
 
-  <p>A <i>fast-clock</i> compresses time for model railroading timetables.
-    Control your operating sessions with this handy fast-clock for the web.
-    Runs on any device including tablets and smartphones.
-    Adjust the controls above to your liking and your good&nbsp;to&nbsp;go.</p>
+                <!-- Minutes -->
+                <div class="control-item">
+                    <span class="label">Minutes</span>
+                    <div class="control-group">
+                        <button onclick="adjustTime('m', -1)" class="adjust-btn">−</button>
+                        <button onclick="adjustTime('m', 1)" class="adjust-btn">+</button>
+                    </div>
+                </div>
 
-  <!-- <p>Even works off-line when there is no Internet connection.
-    Just bookmark this page so you can navigate back here&nbsp;quickly.</p> -->
+                <!-- ETA -->
+                <div class="eta-container">
+                    <span class="label">24h Passes in</span>
+                    <p id="eta-label">12h 00m</p>
+                </div>
+            </div>
 
-  <script type="text/javascript">
-    OnResized();
-    OnFactorChanged(24.0);
-  </script>
+            <!-- Slider Section -->
+            <div class="slider-section">
+                <input type="range" id="speed-slider" min="5" max="1440" step="5" value="720">
+            </div>
+        </div>
+    </div>
 
-  <hr>
+    <div class="footer">
+        <p class="footer-text">
+            MR Fast-Clock &copy; 2009 <a target="_blank" href='mailto:tdmurtmub@gmail.com?subject=MR%20Fast-Clock%20Feedback'>Wesley Steiner</a>
+        </p>
+    </div>
 
-  <div class="footer">
-    <p>Have a suggestion or idea? Send me a quick&nbsp;note.</p>
-    <p><a class='mylink' href='mailto:tdmurtmub@gmail.com?subject=Fast-Clock%20Feedback'>FEEDBACK</a></p>
-    <p>Like what I've done and want to support my efforts or just say&nbsp;thanks?</p>
-    <p><a class='mylink' target='_blank' href='https://www.wesleysteiner.com/donate.html'>THANKS</a></p>
-    <p><b>Model Railroad Fast Clock</b><br>
-      (release #4.26.1.17)</p>
-    <p>(available on <a target='_blank' href="https://github.com/tdmurtmub/mr_fastclock">GitHub</a>)</p>
-    <p>&copy; 2009 <a target='_blank' href='mailto:steiner.wesley@gmail.com'>Wesley Steiner</a></p>
-  </div>
+    <script>
+        const clockEl = document.getElementById('clock');
+        const slider = document.getElementById('speed-slider');
+        const etaLabel = document.getElementById('eta-label');
+        const pauseBtn = document.getElementById('pause-btn');
+        const pauseIcon = document.getElementById('pause-icon');
+        const pauseLabel = document.getElementById('pause-label');
 
+        const STORAGE_KEY = 'mr-fast-clock-settings';
+
+        let baseRealTime = Date.now();
+        let baseWarpedTime = Date.now();
+        let currentMultiplier = 2; 
+        let isPaused = false;
+        let pausedWarpedTime = null;
+
+        function loadSettings() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const settings = JSON.parse(saved);
+                    if (settings.sliderValue) {
+                        slider.value = settings.sliderValue;
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load settings", e);
+            }
+        }
+
+        function saveSettings() {
+            try {
+                const settings = {
+                    sliderValue: slider.value,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+            } catch (e) {
+                console.error("Failed to save settings", e);
+            }
+        }
+
+        function resizeClock() {
+            const container = document.querySelector('.clock-container');
+            const availableWidth = container.clientWidth * 0.90; 
+            const availableHeight = container.clientHeight * 0.85; 
+            
+            let fontSize = 100; 
+            clockEl.style.fontSize = fontSize + 'px';
+            
+            const ratioW = availableWidth / clockEl.offsetWidth;
+            const ratioH = availableHeight / clockEl.offsetHeight;
+            
+            const finalSize = Math.floor(fontSize * Math.min(ratioW, ratioH));
+            clockEl.style.fontSize = finalSize + 'px';
+        }
+
+        window.addEventListener('resize', resizeClock);
+        window.addEventListener('orientationchange', () => setTimeout(resizeClock, 200));
+
+        function getCurrentWarpedTime() {
+            if (isPaused) return pausedWarpedTime;
+            const now = Date.now();
+            const realElapsed = now - baseRealTime;
+            const warpedElapsed = realElapsed * currentMultiplier;
+            return baseWarpedTime + warpedElapsed;
+        }
+
+        function update() {
+            const displayTime = new Date(getCurrentWarpedTime());
+            const h = String(displayTime.getHours()).padStart(2, '0');
+            const m = String(displayTime.getMinutes()).padStart(2, '0');
+            clockEl.textContent = h + ":" + m;
+            requestAnimationFrame(update);
+        }
+
+        function togglePause() {
+            const now = Date.now();
+            if (!isPaused) {
+                pausedWarpedTime = getCurrentWarpedTime();
+                isPaused = true;
+                pauseBtn.classList.add('pause-active');
+                pauseIcon.textContent = "▶";
+                pauseLabel.textContent = "Resume";
+            } else {
+                baseRealTime = now;
+                baseWarpedTime = pausedWarpedTime;
+                isPaused = false;
+                pauseBtn.classList.remove('pause-active');
+                pauseIcon.textContent = "⏸";
+                pauseLabel.textContent = "Pause";
+            }
+        }
+
+        function adjustTime(unit, delta) {
+            const now = Date.now();
+            const currentWarped = getCurrentWarpedTime();
+            const date = new Date(currentWarped);
+            if (unit === 'h') date.setHours(date.getHours() + delta);
+            else if (unit === 'm') date.setMinutes(date.getMinutes() + delta);
+
+            if (isPaused) {
+                pausedWarpedTime = date.getTime();
+            } else {
+                baseRealTime = now;
+                baseWarpedTime = date.getTime();
+            }
+        }
+
+        function resetToNow() {
+            const now = Date.now();
+            if (isPaused) {
+                pausedWarpedTime = now;
+            } else {
+                baseRealTime = now;
+                baseWarpedTime = now;
+            }
+        }
+
+        function handleSliderChange() {
+            const now = Date.now();
+            const warpedAtMoment = getCurrentWarpedTime();
+            const realMinutesPerCycle = parseFloat(slider.value);
+            currentMultiplier = 1440 / realMinutesPerCycle;
+            
+            if (!isPaused) {
+                baseRealTime = now;
+                baseWarpedTime = warpedAtMoment;
+            } else {
+                baseWarpedTime = warpedAtMoment;
+                baseRealTime = now;
+            }
+            
+            const h = Math.floor(realMinutesPerCycle / 60);
+            const m = Math.round(realMinutesPerCycle % 60);
+            
+            if (etaLabel) {
+                etaLabel.textContent = h.toString().padStart(2, '0') + "h " + m.toString().padStart(2, '0') + "m";
+            }
+
+            saveSettings();
+        }
+
+        slider.addEventListener('input', handleSliderChange);
+        
+        // Initialization
+        loadSettings();
+        handleSliderChange();
+        
+        setTimeout(resizeClock, 50);
+        update();
+    </script>
 </body>
-
 </html>
